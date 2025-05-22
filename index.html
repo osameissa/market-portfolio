@@ -502,25 +502,22 @@
               annualYield,
               monthlyYield,
             }) => `
-            <tr>
-              <td>${crypto.label || crypto.coin_id}</td>
-              <td>${crypto.quantity}</td>
-              <td>${price ? "$" + price.toFixed(2) : "N/A (API Error)"}</td>
-              <td>${totalValue ? "$" + totalValue.toFixed(2) : "N/A"}</td>
-              <td>${
-                crypto.apr !== null && crypto.apr !== 0
-                  ? crypto.apr.toFixed(2)
-                  : ""
-              }</td>
-              <td>${monthlyYield ? "$" + monthlyYield.toFixed(2) : ""}</td>
-              <td>${annualYield ? "$" + annualYield.toFixed(2) : ""}</td>
-             <td class="action-icons">
-  <span onclick="editHolding('stock', ${index})" title="Edit"><i class="fa-solid fa-pen icon-dark"></i></span>
-  <span onclick="removeHolding('stock', ${index})" title="Remove"><i class="fa-solid fa-trash icon-dark"></i></span>
-</td>
-
-            </tr>
-          `
+    <tr>
+      <td>${crypto.label || crypto.coin_id}</td>
+      <td>${crypto.quantity}</td>
+      <td>${price ? "$" + price.toFixed(2) : "N/A (API Error)"}</td>
+      <td>${totalValue ? "$" + totalValue.toFixed(2) : "N/A"}</td>
+      <td>${
+        crypto.apr !== null && crypto.apr !== 0 ? crypto.apr.toFixed(2) : ""
+      }</td>
+      <td>${monthlyYield ? "$" + monthlyYield.toFixed(2) : ""}</td>
+      <td>${annualYield ? "$" + annualYield.toFixed(2) : ""}</td>
+      <td class="action-icons">
+        <span onclick="editHolding('crypto', ${index})" title="Edit"><i class="fa-solid fa-pen icon-dark"></i></span>
+        <span onclick="removeHolding('crypto', ${index})" title="Remove"><i class="fa-solid fa-trash icon-dark"></i></span>
+      </td>
+    </tr>
+  `
           );
 
           // Update tables
