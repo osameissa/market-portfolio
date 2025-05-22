@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portfolio Tracker</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background-image: linear-gradient(to right, #434343 0%, black 100%);
+        font-family: "Inter", "Roboto", system-ui, sans-serif;
+        font-weight: 400;
+      }
+      .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        background-color: #efefef;
+      }
+      .table {
+        font-size: 0.95rem;
+        font-weight: 400;
+      }
+      h1 {
+        font-weight: 600;
+        color: white;
+      }
+      h5 {
+        font-weight: 600;
+      }
+      .form-label,
+      .btn {
+        font-weight: 500;
+        color: black;
+      }
+      .btn-primary {
+        font-weight: 500;
+        color: white;
+      }
+
+      #yieldResult {
+        font-weight: normal;
+      }
+      #totalHoldings {
+        font-size: 1.2rem;
+        font-weight: normal;
+        margin-bottom: 1rem;
+      }
+      #totalHoldings span.label {
+        font-weight: 600;
+      }
+      .action-icons {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      .action-icons span {
+        cursor: pointer;
+        font-size: 1.2rem;
+      }
+
+      .icon-dark {
+        color: #333;
+        transition: color 0.2s ease-in-out;
+      }
+
+      .icon-dark:hover {
+        color: #aaa;
+      }
+
+      .card {
+        border-radius: 20px;
+      }
+
+      .card-header:hover {
+        border-radius: 20px;
+        background-color: #b8b8b8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-4">
+      <h1 class="text-center mb-4">Portfolio Tracker</h1>
+
+      <!-- Add Holding Form (Collapsible) -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <button
+            class="btn btn-link text-decoration-none"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#addHoldingCollapse"
+            aria-expanded="false"
+            aria-controls="addHoldingCollapse"
+          >
+            Add New Holding
+          </button>
+        </div>
+        <div class="collapse" id="addHoldingCollapse">
+          <div class="card-body">
+            <form id="addHoldingForm">
+              <div class="mb-3">
+                <label for="type" class="form-label">Type</label>
+                <select class="form-select" id="type" name="type">
+                  <option value="stock">Stock</option>
+                  <option value="crypto">Cryptocurrency</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="symbol" class="form-label">Symbol/ID</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="symbol"
+                  name="symbol"
+                  placeholder="e.g. TSLA, AAPL"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="label" class="form-label">Custom Label</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="label"
+                  name="label"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="quantity" class="form-label">Quantity</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="quantity"
+                  name="quantity"
+                  step="any"
+                />
+              </div>
+              <div class="mb-3" id="aprField" style="display: none">
+                <label for="apr" class="form-label">APR (% per year)</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="apr"
+                  name="apr"
+                  step="any"
+                  placeholder="e.g. 4.32"
+                />
+              </div>
+              <button type="submit" class="btn btn-primary">Add Holding</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Yield Calculator (Collapsible) -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <button
+            class="btn btn-link text-decoration-none"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#yieldCalculatorCollapse"
+            aria-expanded="false"
+            aria-controls="yieldCalculatorCollapse"
+          >
+            Crypto Yield Calculator
+          </button>
+        </div>
+        <div class="collapse" id="yieldCalculatorCollapse">
+          <div class="card-body">
+            <form id="yieldForm">
+              <div class="mb-3">
+                <label for="yieldCoin" class="form-label">Crypto ID</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="yieldCoin"
+                  name="coin_id"
+                  placeholder="e.g. bitcoin"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="yieldQuantity" class="form-label">Quantity</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="yieldQuantity"
+                  name="quantity"
+                  step="any"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="yieldApr" class="form-label"
+                  >APR (% per year)</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="yieldApr"
+                  name="apr"
+                  step="any"
+                  placeholder="e.g., 4.32"
+                />
+              </div>
+              <button type="submit" class="btn btn-primary">
+                Calculate Yield
+              </button>
+            </form>
+            <div id="yieldResult" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Portfolio Display -->
+      <div class="card">
+        <div class="card-header">Your Portfolio</div>
+        <div class="card-body">
+          <div id="totalHoldings" class="text-center">
+            Total Holdings Value: Calculating...
+          </div>
+          <h5>Stocks</h5>
+          <table class="table table-striped mb-4">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Symbol</th>
+                <th>Quantity</th>
+                <th>Current Price</th>
+                <th>Total Value</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="stocksTable"></tbody>
+          </table>
+          <h5>Cryptocurrencies</h5>
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Quantity</th>
+                <th>Current Price</th>
+                <th>Total Value</th>
+                <th>APR (%)</th>
+                <th>Yield per 30d</th>
+                <th>Annual Yield</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="cryptosTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const COINGECKO_API_KEY = "CG-JdQiGKveu8N1E6uRkanJascz";
+      const FINNHUB_API_KEY = "YOUR_FINNHUB_API_KEY"; // Replace with your key from https://finnhub.io/
+      const EXCHANGE_RATE_API_KEY = "YOUR_EXCHANGE_RATE_API_KEY"; // Replace with your key from https://www.exchangerate-api.com/
+
+      // Hardcoded fallbacks (May 22, 2025)
+      const FALLBACK_PRICES = {
+        AAPL: 201.71,
+        TSLA: 345.324,
+      };
+      const FALLBACK_USD_SEK = 10.5;
+
+      // Initialize portfolio from localStorage
+      let portfolio = JSON.parse(localStorage.getItem("portfolio")) || {
+        stocks: [],
+        cryptos: [],
+      };
+
+      // Save portfolio to localStorage
+      function savePortfolio() {
+        localStorage.setItem("portfolio", JSON.stringify(portfolio));
+      }
+
+      // Fetch USD to SEK exchange rate
+      async function getUsdToSekRate() {
+        try {
+          const response = await fetch(
+            `https://api.exchangerate-api.com/v4/latest/USD?apiKey=${EXCHANGE_RATE_API_KEY}`
+          );
+          const data = await response.json();
+          if (data.rates && data.rates.SEK) {
+            console.log(`USD/SEK rate: ${data.rates.SEK}`);
+            return data.rates.SEK;
+          } else {
+            console.error("No SEK rate found:", data);
+            return FALLBACK_USD_SEK;
+          }
+        } catch (error) {
+          console.error("Error fetching USD/SEK rate:", error);
+          console.warn(`Using fallback USD/SEK rate: ${FALLBACK_USD_SEK}`);
+          return FALLBACK_USD_SEK;
+        }
+      }
+
+      // Convert USD to SEK
+      function convertToSek(usd, rate) {
+        return (usd * rate).toFixed(2);
+      }
+
+      // Fetch stock price with Finnhub for TSLA, fallback for AAPL
+      async function getStockPrice(symbol, retries = 2, delay = 1000) {
+        symbol = symbol.toUpperCase();
+        if (symbol === "AAPL") {
+          console.log(
+            `Using fallback price for ${symbol}: $${FALLBACK_PRICES.AAPL}`
+          );
+          return FALLBACK_PRICES.AAPL;
+        }
+        if (symbol === "TSLA") {
+          for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+              const response = await fetch(
+                `https://finnhub.io/api/v1/quote?symbol=TSLA&token=${FINNHUB_API_KEY}`
+              );
+              const data = await response.json();
+              if (data.c && data.c > 0) {
+                const price = parseFloat(data.c);
+                console.log(`TSLA price from Finnhub: $${price}`);
+                return price;
+              } else {
+                console.error(
+                  `No price data for TSLA (attempt ${attempt}/${retries}):`,
+                  data
+                );
+              }
+            } catch (error) {
+              console.error(
+                `Error fetching TSLA price (attempt ${attempt}/${retries}):`,
+                error
+              );
+            }
+            if (attempt < retries) {
+              console.log(`Retrying TSLA in ${delay}ms...`);
+              await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+          }
+          console.warn(
+            `Using fallback price for TSLA: $${FALLBACK_PRICES.TSLA}`
+          );
+          return FALLBACK_PRICES.TSLA;
+        }
+        console.error(
+          `Stock ${symbol} not supported (only TSLA and AAPL available)`
+        );
+        return null;
+      }
+
+      // Fetch crypto price
+      async function getCryptoPrice(coinId) {
+        try {
+          const response = await fetch(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`,
+            { headers: { "x-cg-api-key": COINGECKO_API_KEY } }
+          );
+          const data = await response.json();
+          if (data[coinId]?.usd) {
+            const price = data[coinId].usd;
+            console.log(`Crypto ${coinId} price: $${price}`);
+            return price;
+          } else {
+            console.error(`No price data for crypto ${coinId}:`, data);
+            return null;
+          }
+        } catch (error) {
+          console.error(`Error fetching crypto price for ${coinId}:`, error);
+          return null;
+        }
+      }
+
+      // Calculate 30-day yield (non-compounded)
+      function calculate30DayYield(quantity, price, apr) {
+        if (apr === null || apr === 0) return "0.00";
+        return (quantity * price * (apr / 100) * (30 / 365)).toFixed(2);
+      }
+
+      // Calculate annual yield (non-compounded)
+      function calculateAnnualYield(quantity, price, apr) {
+        if (apr === null || apr === 0) return "0.00";
+        return (quantity * price * (apr / 100)).toFixed(2);
+      }
+
+      // Update portfolio display
+      async function updatePortfolio() {
+        const stocksTable = document.getElementById("stocksTable");
+        const cryptosTable = document.getElementById("cryptosTable");
+        const totalHoldingsDiv = document.getElementById("totalHoldings");
+
+        // Clear tables
+        stocksTable.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
+        cryptosTable.innerHTML = "<tr><td colspan='8'>Loading...</td></tr>";
+        totalHoldingsDiv.innerHTML = "Total Holdings Value: Calculating...";
+
+        let totalPortfolioValue = 0;
+        let totalAnnualYield = 0;
+        let total30DayYield = 0;
+
+        // Fetch USD/SEK exchange rate
+        const usdSekRate = await getUsdToSekRate();
+
+        // Process stocks
+        const stockPromises = portfolio.stocks.map(async (stock, index) => {
+          const price = await getStockPrice(stock.symbol);
+          const totalValue = price ? stock.quantity * price : null;
+          return { stock, index, price, totalValue };
+        });
+
+        // Process cryptos
+        const cryptoPromises = portfolio.cryptos.map(async (crypto, index) => {
+          const price = await getCryptoPrice(crypto.coin_id);
+          const totalValue = price ? crypto.quantity * price : null;
+          const annualYield =
+            price && crypto.apr !== null && crypto.apr !== 0
+              ? parseFloat(
+                  calculateAnnualYield(crypto.quantity, price, crypto.apr)
+                )
+              : 0;
+          const monthlyYield =
+            price && crypto.apr !== null && crypto.apr !== 0
+              ? parseFloat(
+                  calculate30DayYield(crypto.quantity, price, crypto.apr)
+                )
+              : 0;
+          return {
+            crypto,
+            index,
+            price,
+            totalValue,
+            annualYield,
+            monthlyYield,
+          };
+        });
+
+        try {
+          const stockResults = await Promise.all(stockPromises);
+          const cryptoResults = await Promise.all(cryptoPromises);
+
+          // Sort stocks by total value (descending)
+          stockResults.sort((a, b) => {
+            if (a.totalValue === null) return 1;
+            if (b.totalValue === null) return -1;
+            return b.totalValue - a.totalValue;
+          });
+
+          // Sort cryptos by total value (descending)
+          cryptoResults.sort((a, b) => {
+            if (a.totalValue === null) return 1;
+            if (b.totalValue === null) return -1;
+            return b.totalValue - a.totalValue;
+          });
+
+          // Update total values
+          stockResults.forEach(({ totalValue }) => {
+            if (totalValue) totalPortfolioValue += totalValue;
+          });
+          cryptoResults.forEach(({ totalValue, annualYield, monthlyYield }) => {
+            if (totalValue) totalPortfolioValue += totalValue;
+            if (annualYield) totalAnnualYield += annualYield;
+            if (monthlyYield) total30DayYield += monthlyYield;
+          });
+
+          // Render stocks
+          const stockRows = stockResults.map(
+            ({ stock, index, price, totalValue }) => `
+            <tr>
+              <td>${stock.label || stock.symbol}</td>
+              <td>${stock.symbol}</td>
+              <td>${stock.quantity}</td>
+              <td>${price ? "$" + price.toFixed(2) : "N/A (API Error)"}</td>
+              <td>${totalValue ? "$" + totalValue.toFixed(2) : "N/A"}</td>
+             <td class="action-icons">
+  <span onclick="editHolding('stock', ${index})" title="Edit"><i class="fa-solid fa-pen icon-dark"></i></span>
+  <span onclick="removeHolding('stock', ${index})" title="Remove"><i class="fa-solid fa-trash icon-dark"></i></span>
+</td>
+
+            </tr>
+          `
+          );
+
+          // Render cryptos
+          const cryptoRows = cryptoResults.map(
+            ({
+              crypto,
+              index,
+              price,
+              totalValue,
+              annualYield,
+              monthlyYield,
+            }) => `
+            <tr>
+              <td>${crypto.label || crypto.coin_id}</td>
+              <td>${crypto.quantity}</td>
+              <td>${price ? "$" + price.toFixed(2) : "N/A (API Error)"}</td>
+              <td>${totalValue ? "$" + totalValue.toFixed(2) : "N/A"}</td>
+              <td>${
+                crypto.apr !== null && crypto.apr !== 0
+                  ? crypto.apr.toFixed(2)
+                  : ""
+              }</td>
+              <td>${monthlyYield ? "$" + monthlyYield.toFixed(2) : ""}</td>
+              <td>${annualYield ? "$" + annualYield.toFixed(2) : ""}</td>
+             <td class="action-icons">
+  <span onclick="editHolding('stock', ${index})" title="Edit"><i class="fa-solid fa-pen icon-dark"></i></span>
+  <span onclick="removeHolding('stock', ${index})" title="Remove"><i class="fa-solid fa-trash icon-dark"></i></span>
+</td>
+
+            </tr>
+          `
+          );
+
+          // Update tables
+          stocksTable.innerHTML =
+            stockRows.join("") ||
+            "<tr><td colspan='6'>No stocks in portfolio</td></tr>";
+          cryptosTable.innerHTML =
+            cryptoRows.join("") ||
+            "<tr><td colspan='8'>No cryptocurrencies in portfolio</td></tr>";
+          totalHoldingsDiv.innerHTML = `
+            <span class="label">Total Holdings Value:</span> <span>${convertToSek(
+              totalPortfolioValue,
+              usdSekRate
+            )}</span> kr<br>
+            <span class="label">Annual Yield:</span> <span>${convertToSek(
+              totalAnnualYield,
+              usdSekRate
+            )}</span> kr<br>
+            <span class="label">30d Yield:</span> <span>${convertToSek(
+              total30DayYield,
+              usdSekRate
+            )}</span> kr
+          `;
+        } catch (error) {
+          console.error("Error updating portfolio:", error);
+          stocksTable.innerHTML =
+            "<tr><td colspan='6'>Error loading stocks. Check console for details.</td></tr>";
+          cryptosTable.innerHTML =
+            "<tr><td colspan='8'>Error loading cryptocurrencies. Check console for details.</td></tr>";
+          totalHoldingsDiv.innerHTML = "Total Holdings Value: Error";
+        }
+      }
+
+      // Edit holding quantity
+      window.editHolding = function (type, index) {
+        const holding =
+          type === "stock" ? portfolio.stocks[index] : portfolio.cryptos[index];
+        const newQuantity = prompt(
+          `Enter new quantity for ${
+            holding.label ||
+            (type === "stock" ? holding.symbol : holding.coin_id)
+          }:`,
+          holding.quantity
+        );
+        if (newQuantity !== null && !isNaN(newQuantity) && newQuantity >= 0) {
+          holding.quantity = parseFloat(newQuantity);
+          savePortfolio();
+          updatePortfolio();
+        } else if (newQuantity !== null) {
+          alert("Please enter a valid non-negative number for quantity.");
+        }
+      };
+
+      // Remove holding
+      window.removeHolding = function (type, index) {
+        if (type === "stock") {
+          portfolio.stocks.splice(index, 1);
+        } else {
+          portfolio.cryptos.splice(index, 1);
+        }
+        savePortfolio();
+        updatePortfolio();
+      };
+
+      // Handle add holding form submission
+      document
+        .getElementById("addHoldingForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const type = form.type.value;
+          const symbol = form.symbol.value;
+          const label = form.label.value;
+          const quantity = parseFloat(form.quantity.value);
+          const apr = form.apr.value ? parseFloat(form.apr.value) : null;
+
+          if (!symbol || !quantity) {
+            alert("Please fill in symbol and quantity");
+            return;
+          }
+
+          if (type === "stock") {
+            portfolio.stocks.push({
+              symbol: symbol.toUpperCase(),
+              quantity,
+              label,
+            });
+          } else {
+            const coin_id = symbol.toLowerCase();
+            portfolio.cryptos.push({ coin_id, quantity, apr, label });
+          }
+
+          savePortfolio();
+          await updatePortfolio();
+          form.reset();
+          document.getElementById("aprField").style.display = "none";
+          document
+            .getElementById("addHoldingCollapse")
+            .classList.remove("show");
+        });
+
+      // Handle yield calculator form submission
+      document
+        .getElementById("yieldForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const coinId = form.coin_id.value.toLowerCase();
+          const quantity = parseFloat(form.quantity.value);
+          const apr = form.apr.value ? parseFloat(form.apr.value) : null;
+          const resultDiv = document.getElementById("yieldResult");
+
+          if (!coinId || !quantity) {
+            resultDiv.innerHTML =
+              '<span class="text-danger">Please fill in coin ID and quantity</span>';
+            return;
+          }
+
+          const price = await getCryptoPrice(coinId);
+          if (!price) {
+            resultDiv.innerHTML =
+              '<span class="text-danger">Could not fetch price</span>';
+            return;
+          }
+
+          const usdSekRate = await getUsdToSekRate();
+          const currentValue = (quantity * price).toFixed(2);
+          const annualYield = apr
+            ? calculateAnnualYield(quantity, price, apr)
+            : "0.00";
+          const monthlyYield = apr
+            ? calculate30DayYield(quantity, price, apr)
+            : "0.00";
+          resultDiv.innerHTML = `
+          <span class="label">Current Value:</span> <span>${convertToSek(
+            currentValue,
+            usdSekRate
+          )}</span> kr<br>
+          <span class="label">Yield per 30 Days at ${
+            apr || 0
+          }% APR:</span> <span>${convertToSek(
+            monthlyYield,
+            usdSekRate
+          )}</span> kr<br>
+          <span class="label">Annual Yield at ${
+            apr || 0
+          }% APR:</span> <span>${convertToSek(
+            annualYield,
+            usdSekRate
+          )}</span> kr
+        `;
+          document
+            .getElementById("yieldCalculatorCollapse")
+            .classList.remove("show");
+        });
+
+      // Show/hide APR field based on type selection
+      document.getElementById("type").addEventListener("change", (e) => {
+        const aprField = document.getElementById("aprField");
+        aprField.style.display = e.target.value === "crypto" ? "block" : "none";
+      });
+
+      // Initial portfolio load
+      updatePortfolio();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
