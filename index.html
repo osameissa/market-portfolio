@@ -409,9 +409,14 @@
         let totalPortfolioValue = 0;
         let totalAnnualYield = 0;
         let total30DayYield = 0;
+        let chainlinkAnnualYield = 0;
+        let chainlink30DayYield = 0;
 
         // Fetch USD/SEK exchange rate
         const usdSekRate = await getUsdToSekRate();
+
+        // Fetch CHAINLINK price for yield conversion
+        const linkPrice = await getCryptoPrice("chainlink");
 
         // Process stocks
         const stockPromises = portfolio.stocks.map(async (stock, index) => {
@@ -424,18 +429,44 @@
         const cryptoPromises = portfolio.cryptos.map(async (crypto, index) => {
           const price = await getCryptoPrice(crypto.coin_id);
           const totalValue = price ? crypto.quantity * price : null;
-          const annualYield =
+          let annualYield =
             price && crypto.apr !== null && crypto.apr !== 0
               ? parseFloat(
                   calculateAnnualYield(crypto.quantity, price, crypto.apr)
                 )
               : 0;
-          const monthlyYield =
+          let monthlyYield =
             price && crypto.apr !== null && crypto.apr !== 0
               ? parseFloat(
                   calculate30DayYield(crypto.quantity, price, crypto.apr)
                 )
               : 0;
+          let annualYieldDisplay = annualYield
+            ? `${convertToSek(annualYield, usdSekRate)} kr`
+            : "";
+          let monthlyYieldDisplay = monthlyYield
+            ? `${convertToSek(monthlyYield, usdSekRate)} kr`
+            : "";
+
+          // Add LINK tokens in parentheses for CHAINLINK in table
+          if (
+            crypto.coin_id.toLowerCase() === "chainlink" &&
+            linkPrice &&
+            annualYield &&
+            monthlyYield
+          ) {
+            annualYieldDisplay = `${convertToSek(
+              annualYield,
+              usdSekRate
+            )} kr (${(annualYield / linkPrice).toFixed(4)} LINK)`;
+            monthlyYieldDisplay = `${convertToSek(
+              monthlyYield,
+              usdSekRate
+            )} kr (${(monthlyYield / linkPrice).toFixed(4)} LINK)`;
+            chainlinkAnnualYield += annualYield;
+            chainlink30DayYield += monthlyYield;
+          }
+
           return {
             crypto,
             index,
@@ -443,6 +474,8 @@
             totalValue,
             annualYield,
             monthlyYield,
+            annualYieldDisplay,
+            monthlyYieldDisplay,
           };
         });
 
@@ -477,19 +510,18 @@
           // Render stocks
           const stockRows = stockResults.map(
             ({ stock, index, price, totalValue }) => `
-            <tr>
-              <td>${stock.label || stock.symbol}</td>
-              <td>${stock.symbol}</td>
-              <td>${stock.quantity}</td>
-              <td>${price ? "$" + price.toFixed(2) : "N/A (API Error)"}</td>
-              <td>${totalValue ? "$" + totalValue.toFixed(2) : "N/A"}</td>
-             <td class="action-icons">
-  <span onclick="editHolding('stock', ${index})" title="Edit"><i class="fa-solid fa-pen icon-dark"></i></span>
-  <span onclick="removeHolding('stock', ${index})" title="Remove"><i class="fa-solid fa-trash icon-dark"></i></span>
-</td>
-
-            </tr>
-          `
+              <tr>
+                <td>${stock.label || stock.symbol}</td>
+                <td>${stock.symbol}</td>
+                <td>${stock.quantity}</td>
+                <td>${price ? "$" + price.toFixed(2) : "N/A (API Error)"}</td>
+                <td>${totalValue ? "$" + totalValue.toFixed(2) : "N/A"}</td>
+                <td class="action-icons">
+                  <span onclick="editHolding('stock', ${index})" title="Edit"><i class="fa-solid fa-pen icon-dark"></i></span>
+                  <span onclick="removeHolding('stock', ${index})" title="Remove"><i class="fa-solid fa-trash icon-dark"></i></span>
+                </td>
+              </tr>
+            `
           );
 
           // Render cryptos
@@ -499,25 +531,27 @@
               index,
               price,
               totalValue,
-              annualYield,
-              monthlyYield,
+              annualYieldDisplay,
+              monthlyYieldDisplay,
             }) => `
-    <tr>
-      <td>${crypto.label || crypto.coin_id}</td>
-      <td>${crypto.quantity}</td>
-      <td>${price ? "$" + price.toFixed(2) : "N/A (API Error)"}</td>
-      <td>${totalValue ? "$" + totalValue.toFixed(2) : "N/A"}</td>
-      <td>${
-        crypto.apr !== null && crypto.apr !== 0 ? crypto.apr.toFixed(2) : ""
-      }</td>
-      <td>${monthlyYield ? "$" + monthlyYield.toFixed(2) : ""}</td>
-      <td>${annualYield ? "$" + annualYield.toFixed(2) : ""}</td>
-      <td class="action-icons">
-        <span onclick="editHolding('crypto', ${index})" title="Edit"><i class="fa-solid fa-pen icon-dark"></i></span>
-        <span onclick="removeHolding('crypto', ${index})" title="Remove"><i class="fa-solid fa-trash icon-dark"></i></span>
-      </td>
-    </tr>
-  `
+              <tr>
+                <td>${crypto.label || crypto.coin_id}</td>
+                <td>${crypto.quantity}</td>
+                <td>${price ? "$" + price.toFixed(2) : "N/A (API Error)"}</td>
+                <td>${totalValue ? "$" + totalValue.toFixed(2) : "N/A"}</td>
+                <td>${
+                  crypto.apr !== null && crypto.apr !== 0
+                    ? crypto.apr.toFixed(2)
+                    : ""
+                }</td>
+                <td>${monthlyYieldDisplay}</td>
+                <td>${annualYieldDisplay}</td>
+                <td class="action-icons">
+                  <span onclick="editHolding('crypto', ${index})" title="Edit"><i class="fa-solid fa-pen icon-dark"></i></span>
+                  <span onclick="removeHolding('crypto', ${index})" title="Remove"><i class="fa-solid fa-trash icon-dark"></i></span>
+                </td>
+              </tr>
+            `
           );
 
           // Update tables
@@ -527,19 +561,36 @@
           cryptosTable.innerHTML =
             cryptoRows.join("") ||
             "<tr><td colspan='8'>No cryptocurrencies in portfolio</td></tr>";
+
+          // Prepare total holdings display with LINK yields for CHAINLINK portion
+          let annualYieldTotalDisplay = `${convertToSek(
+            totalAnnualYield,
+            usdSekRate
+          )} kr`;
+          let monthlyYieldTotalDisplay = `${convertToSek(
+            total30DayYield,
+            usdSekRate
+          )} kr`;
+          if (
+            linkPrice &&
+            chainlinkAnnualYield > 0 &&
+            chainlink30DayYield > 0
+          ) {
+            annualYieldTotalDisplay += ` (${(
+              chainlinkAnnualYield / linkPrice
+            ).toFixed(4)} LINK)`;
+            monthlyYieldTotalDisplay += ` (${(
+              chainlink30DayYield / linkPrice
+            ).toFixed(4)} LINK)`;
+          }
+
           totalHoldingsDiv.innerHTML = `
             <span class="label">Total Holdings Value:</span> <span>${convertToSek(
               totalPortfolioValue,
               usdSekRate
             )}</span> kr<br>
-            <span class="label">Annual Yield:</span> <span>${convertToSek(
-              totalAnnualYield,
-              usdSekRate
-            )}</span> kr<br>
-            <span class="label">30d Yield:</span> <span>${convertToSek(
-              total30DayYield,
-              usdSekRate
-            )}</span> kr
+            <span class="label">Annual Yield:</span> <span>${annualYieldTotalDisplay}</span><br>
+            <span class="label">30d Yield:</span> <span>${monthlyYieldTotalDisplay}</span>
           `;
         } catch (error) {
           console.error("Error updating portfolio:", error);
@@ -652,23 +703,23 @@
             ? calculate30DayYield(quantity, price, apr)
             : "0.00";
           resultDiv.innerHTML = `
-          <span class="label">Current Value:</span> <span>${convertToSek(
-            currentValue,
-            usdSekRate
-          )}</span> kr<br>
-          <span class="label">Yield per 30 Days at ${
-            apr || 0
-          }% APR:</span> <span>${convertToSek(
+            <span class="label">Current Value:</span> <span>${convertToSek(
+              currentValue,
+              usdSekRate
+            )}</span> kr<br>
+            <span class="label">Yield per 30 Days at ${
+              apr || 0
+            }% APR:</span> <span>${convertToSek(
             monthlyYield,
             usdSekRate
           )}</span> kr<br>
-          <span class="label">Annual Yield at ${
-            apr || 0
-          }% APR:</span> <span>${convertToSek(
+            <span class="label">Annual Yield at ${
+              apr || 0
+            }% APR:</span> <span>${convertToSek(
             annualYield,
             usdSekRate
           )}</span> kr
-        `;
+          `;
           document
             .getElementById("yieldCalculatorCollapse")
             .classList.remove("show");
